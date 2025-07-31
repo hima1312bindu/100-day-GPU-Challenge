@@ -1,18 +1,17 @@
 #include <stdio.h>
 
 __global__ void partialSumKernel(int *input, int *output, int n) {
-    // Shared memory 
+
     extern __shared__ int sharedMemory[];
     
     int tid = threadIdx.x;
     int index = blockIdx.x * blockDim.x*2 + tid;
 
     if (index < n) {
-        // Load input into shared memory and optimize the loading to do coalescing 
+ 
         sharedMemory[tid] = input[index]+input[index+blockDim.x];
         __syncthreads();
 
-        // Perform inclusive scan in shared memory
         for (int stride = 1; stride < blockDim.x; stride *= 2) {
             int temp = 0;
             if (tid >= stride) {
@@ -23,7 +22,6 @@ __global__ void partialSumKernel(int *input, int *output, int n) {
             __syncthreads();
         }
 
-        // Write result to global memory
         output[index] = sharedMemory[tid];
     }
 }
